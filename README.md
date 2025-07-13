@@ -1,16 +1,33 @@
 # 🧠 Tekshila
 
-Tekshila is an AI-powered Streamlit application that generates technical documentation (like README files) and adds contextual comments to source code. It also integrates with GitHub to create pull requests and performs AI-driven code quality analysis.
+Tekshila is an AI-powered web application that generates technical documentation and adds contextual comments to source code. It integrates with GitHub to create pull requests and performs AI-driven code quality analysis.
 
 ## 🚀 Features
 
-- 📄 **README Generator**: Automatically generate detailed README files from your codebase.
-- 💬 **Code Commenting**: Add helpful and contextual comments to source code.
-- 🧪 **Code Quality Analysis**: Identify code smells, security issues, performance bottlenecks, and best practices.
-- 🔄 **GitHub Integration**: Create pull requests directly with your documentation or annotated code.
-- 🧠 Powered by **Gemini API** for intelligent and language-aware code processing.
+- 📄 **README Generator**: Automatically generate detailed README files from your codebase
+- 💬 **Code Commenting**: Add helpful and contextual comments to source code
+- 🧪 **Code Quality Analysis**: Identify code smells, security issues, and performance bottlenecks
+- 🔄 **GitHub Integration**: Create pull requests directly with your documentation
+- 🧠 **AI-Powered**: Uses Gemini API for intelligent code analysis
 
-## 📦 Installation
+## 📦 Project Structure
+
+```
+tekshila/
+├── api/                      # Backend API
+│   ├── app.py               # Flask API server
+│   ├── core.py              # Document generation logic
+│   └── utils/               # Utility modules
+├── frontend/                # Web interface
+│   ├── index.html          # Main HTML
+│   ├── styles.css          # Styling
+│   └── script.js           # Frontend logic
+├── requirements.txt         # Python dependencies
+├── vercel.json             # Vercel configuration
+└── .env.example            # Environment template
+```
+
+## �️ Setup
 
 1. **Clone the repository**:
    ```bash
@@ -18,76 +35,45 @@ Tekshila is an AI-powered Streamlit application that generates technical documen
    cd tekshila
    ```
 
-2. **Install dependencies**:
-   Make sure you have Python 3.8+ installed, then:
+2. **Install Python dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Configure environment variables**:
-   Create a `.env` file with the following:
-   ```env
-   GEMINI_API_KEY=your_gemini_api_key
-   GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
-   GEMINI_API_MODEL=gemini-2.0-flash
-   SONARCLOUD_TOKEN=your_sonarcloud_token
-   SONARCLOUD_ORG=your_sonarcloud_organization
+3. **Set up environment variables**:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys
    ```
 
-## 🖥️ Usage
+4. **Run locally**:
+   ```bash
+   # Start the API server
+   python api/app.py
+   
+   # In another terminal, serve the frontend
+   cd frontend
+   npx http-server . -p 3000
+   ```
 
-Run the Streamlit app:
+## 🚀 Deployment
 
-```bash
-streamlit run main.py
-```
+### Deploy to Vercel
 
-### Main Tabs:
+1. Install Vercel CLI:
+   ```bash
+   npm i -g vercel
+   ```
 
-1. **Generate Documentation**:
-   - Upload one or more code files (or a ZIP).
-   - Choose whether to generate a README or add comments.
-   - Provide a project name and optional instructions.
-   - Download results or push directly to GitHub.
+2. Deploy:
+   ```bash
+   vercel
+   ```
 
-2. **GitHub Integration**:
-   - Authenticate with your GitHub token.
-   - Select a repository and branch.
-   - Create a PR with the newly generated documentation.
-
-3. **Code Quality Analysis**:
-   - Upload a file to receive detailed analysis and improvement suggestions from the AI.
-
-## 🧠 Gemini API Integration
-
-The app uses Gemini's large language model to analyze and understand code. Ensure you set up your API key and endpoint in the `.env` file.
-
-## 🔐 GitHub Integration
-
-- Tekshila uses [PyGithub](https://pygithub.readthedocs.io/) for GitHub operations.
-- Your personal access token should have `repo` scope to allow for PR creation.
-
-## 📂 Project Structure
-
-```bash
-.
-├── main.py                 # Streamlit UI logic
-├── core.py                 # Code processing and Gemini interaction
-├── code_quality.py         # AI-driven code quality analysis
-├── github_integration.py  # GitHub API integration
-├── requirements.txt        # Python dependencies
-├── .env                    # API credentials (not committed)
-├── .gitignore
-└── LICENSE
-```
+3. Set environment variables in Vercel dashboard:
+   - `GEMINI_API_KEY`
+   - `GEMINI_API_URL`
 
 ## 📃 License
 
-This project is licensed under the terms of the MIT License. See [LICENSE](./LICENSE) for details.
-
-## 🙌 Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-## 🙌 WebLink
-https://code-documentation--generator-pxk9mwyf8vcaj6afonyw7v.streamlit.app/#code-documentation-generator
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.

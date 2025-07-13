@@ -28,7 +28,9 @@ class AppState {
 
 // API Configuration
 const API_CONFIG = {
-    baseUrl: 'http://localhost:8501', // Streamlit backend URL
+    baseUrl: window.location.hostname === 'localhost' 
+        ? 'http://localhost:8000' 
+        : '/api',
     endpoints: {
         generateDocs: '/generate-docs',
         analyzeQuality: '/analyze-quality',
@@ -549,17 +551,143 @@ class GitHubManager {
     }
 
     init() {
+        // Check if user has stored GitHub token
+        const storedToken = localStorage.getItem('github_token');
+        const storedUser = localStorage.getItem('github_user');
+        
+        if (storedToken && storedUser) {
+            this.appState.updateState('githubToken', storedToken);
+            this.appState.updateState('githubConnected', true);
+            this.appState.updateState('githubUser', JSON.parse(storedUser));
+            this.updateConnectionStatus(true);
+        }
+
+        // Modal elements
+        const authModal = document.getElementById('githubAuthModal');
+        const skipAuthBtn = document.getElementById('skipAuthBtn');
+        const continueAuthBtn = document.getElementById('continueAuthBtn');
+        const authTokenInput = document.getElementById('authGithubToken');
+
+        // Regular GitHub integration elements
         const connectBtn = document.getElementById('connectGithubBtn');
         const repoSelect = document.getElementById('repoSelect');
         const createPrBtn = document.getElementById('createPrBtn');
 
+        // GitHub tab click handler
+        const githubTab = document.querySelector('[data-tab="github"]');
+        githubTab.addEventListener('click', () => {
+            if (!this.appState.githubConnected) {
+                setTimeout(() => this.showAuthModal(), 300);
+            }
+        });
+
+        // Auth modal handlers
+        skipAuthBtn.addEventListener('click', () => this.hideAuthModal());
+        continueAuthBtn.addEventListener('click', () => this.authenticateWithToken());
+        
+        authTokenInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.authenticateWithToken();
+            }
+        });
+
+        // Regular handlers
         connectBtn.addEventListener('click', () => this.connectToGitHub());
         repoSelect.addEventListener('change', () => this.loadBranches());
         createPrBtn.addEventListener('click', () => this.createPullRequest());
+
+        // Lock GitHub features if not authenticated
+        this.updateFeatureLocks();
+    }
+
+    showAuthModal() {
+        const modal = document.getElementById('githubAuthModal');
+        modal.classList.add('active');
+        document.getElementById('authGithubToken').focus();
+    }
+
+    hideAuthModal() {
+        const modal = document.getElementById('githubAuthModal');
+        modal.classList.remove('active');
+    }
+
+    updateFeatureLocks() {
+        const githubPanel = document.querySelector('.github-panel');
+        const prPanel = document.querySelector('.pr-panel');
+        
+        if (!this.appState.githubConnected) {
+            githubPanel?.classList.add('github-feature-locked');
+            prPanel?.classList.add('github-feature-locked');
+            
+            // Add click handlers to show auth modal
+            [githubPanel, prPanel].forEach(panel => {
+                panel?.addEventListener('click', (e) => {
+                    if (panel.classList.contains('github-feature-locked')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.showAuthModal();
+                    }
+                });
+            });
+        } else {
+            githubPanel?.classList.remove('github-feature-locked');
+            prPanel?.classList.remove('github-feature-locked');
+        }
+    }
+
+    async authenticateWithToken() {
+        const token = document.getElementById('authGithubToken').value;
+        
+        if (!token) {
+            Utils.showToast('Please enter a GitHub token', 'error');
+            return;
+        }
+
+        Utils.showLoading('Authenticating...', 'Connecting to GitHub');
+
+        try {
+            const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.connectGithub}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token })
+            });
+
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                // Store token and user info
+                localStorage.setItem('github_token', token);
+                localStorage.setItem('github_user', JSON.stringify(data.user));
+                
+                this.appState.updateState('githubConnected', true);
+                this.appState.updateState('githubToken', token);
+                this.appState.updateState('githubUser', data.user);
+                
+                this.updateConnectionStatus(true);
+                this.updateFeatureLocks();
+                this.hideAuthModal();
+                
+                // Pre-fill the token in the regular input
+                document.getElementById('githubToken').value = token;
+                
+                await this.loadRepositories();
+                
+                Utils.showToast(`Welcome, ${data.user.name || data.user.login}!`, 'success');
+            } else {
+                Utils.showToast(data.error || 'Authentication failed', 'error');
+            }
+        } catch (error) {
+            console.error('Authentication error:', error);
+            Utils.showToast('Failed to authenticate. Please check your token.', 'error');
+        } finally {
+            Utils.hideLoading();
+        }
     }
 
     async connectToGitHub() {
-        const token = document.getElementById('githubToken').value;
+        const token = document.getElementById('githubToken').value || this.appState.githubToken;
         
         if (!token) {
             Utils.showToast('Please enter a GitHub token', 'error');
@@ -569,17 +697,33 @@ class GitHubManager {
         Utils.showLoading('Connecting to GitHub...', 'Validating your access token');
 
         try {
-            // Simulate GitHub connection
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            this.appState.updateState('githubConnected', true);
-            this.appState.updateState('githubToken', token);
-            
-            this.updateConnectionStatus(true);
-            await this.loadRepositories();
-            
-            Utils.showToast('Successfully connected to GitHub!', 'success');
+            const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.connectGithub}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token })
+            });
 
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                // Store token and user info
+                localStorage.setItem('github_token', token);
+                localStorage.setItem('github_user', JSON.stringify(data.user));
+                
+                this.appState.updateState('githubConnected', true);
+                this.appState.updateState('githubToken', token);
+                this.appState.updateState('githubUser', data.user);
+                
+                this.updateConnectionStatus(true);
+                this.updateFeatureLocks();
+                await this.loadRepositories();
+                
+                Utils.showToast('Successfully connected to GitHub!', 'success');
+            } else {
+                Utils.showToast(data.error || 'Failed to connect', 'error');
+            }
         } catch (error) {
             console.error('GitHub connection error:', error);
             Utils.showToast('Failed to connect to GitHub. Please check your token.', 'error');
@@ -595,8 +739,12 @@ class GitHubManager {
         const prPlaceholder = document.getElementById('prPlaceholder');
 
         if (connected) {
+            const user = this.appState.githubUser;
             statusElement.classList.add('connected');
-            statusElement.innerHTML = '<div class="status-dot"></div><span>Connected</span>';
+            statusElement.innerHTML = `
+                <div class="status-dot"></div>
+                <span>${user ? user.login : 'Connected'}</span>
+            `;
             githubRepos.style.display = 'block';
             
             if (this.appState.generatedContent) {

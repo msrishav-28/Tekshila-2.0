@@ -6,13 +6,9 @@ This file creates a simple Flask API to bridge the frontend with the existing ba
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-import sys
 import tempfile
 import zipfile
 from werkzeug.utils import secure_filename
-
-# Add the parent directory to the path to import the existing modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core import call_gemini, process_file_content, process_zip_file, SUPPORTED_FILES
 from utils.github_integration import GitHubIntegration
@@ -172,17 +168,27 @@ def connect_github():
         # Create GitHub integration instance
         github = GitHubIntegration(token)
         
-        # Validate token
+        # Validate token and get user info
         if github.validate_token():
-            # Store the integration (in production, use proper session management)
-            session_id = f"session_{len(github_integrations)}"
-            github_integrations[session_id] = github
-            
-            return jsonify({
-                "success": True,
-                "session_id": session_id,
-                "message": "Successfully connected to GitHub"
-            })
+            try:
+                user = github.github.get_user()
+                user_info = {
+                    "login": user.login,
+                    "name": user.name,
+                    "avatar_url": user.avatar_url,
+                    "public_repos": user.public_repos
+                }
+                
+                return jsonify({
+                    "success": True,
+                    "user": user_info,
+                    "message": "Successfully connected to GitHub"
+                })
+            except Exception as e:
+                return jsonify({
+                    "success": False,
+                    "error": "Failed to get user information"
+                }), 401
         else:
             return jsonify({
                 "success": False,
@@ -288,17 +294,11 @@ def not_found(e):
 def internal_error(e):
     return jsonify({"error": "Internal server error"}), 500
 
+# For Vercel deployment
+app = app
+
+# Development server
 if __name__ == '__main__':
-    print("Starting Tekshila API Bridge...")
+    print("Starting Tekshila API...")
     print(f"Gemini API configured: {'Yes' if GEMINI_API_KEY else 'No'}")
-    print("Available endpoints:")
-    print("  GET  /health - Health check")
-    print("  POST /generate-docs - Generate documentation")
-    print("  POST /analyze-quality - Analyze code quality")
-    print("  POST /github/connect - Connect to GitHub")
-    print("  GET  /github/repos - Get repositories")
-    print("  POST /github/branches - Get branches")
-    print("  POST /github/create-pr - Create pull request")
-    print("\nStarting server on http://localhost:8000")
-    
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(debug=False, host='0.0.0.0', port=8000)

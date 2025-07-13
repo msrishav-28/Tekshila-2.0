@@ -289,6 +289,33 @@
             </div>
         </main>
 
+        <!-- GitHub Authentication Modal -->
+        <div class="auth-modal" id="githubAuthModal">
+            <div class="auth-modal-content">
+                <div class="auth-modal-header">
+                    <i class="fab fa-github auth-icon"></i>
+                    <h2>Continue with GitHub</h2>
+                    <p>Enter your GitHub Personal Access Token to access GitHub features</p>
+                </div>
+                
+                <div class="auth-modal-body">
+                    <div class="input-group">
+                        <label for="authGithubToken">Personal Access Token</label>
+                        <input type="password" id="authGithubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                        <small>Token should have 'repo' scope permissions. <a href="https://github.com/settings/tokens/new?scopes=repo" target="_blank">Create one here</a></small>
+                    </div>
+                    
+                    <div class="auth-actions">
+                        <button class="btn btn-secondary" id="skipAuthBtn">Skip for Now</button>
+                        <button class="btn btn-primary" id="continueAuthBtn">
+                            <i class="fab fa-github"></i>
+                            Continue with GitHub
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Loading Overlay -->
         <div class="loading-overlay" id="loadingOverlay">
             <div class="loading-content">
