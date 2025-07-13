@@ -1,0 +1,25 @@
+{
+  "name": "tekshila-frontend",
+  "version": "1.0.0",
+  "description": "Modern web frontend for Tekshila - AI-powered code documentation tool",
+  "main": "index.html",
+  "scripts": {
+    "dev": "concurrently \"cd ../backend && python src/api-bridge.py\" \"npx http-server . -p 3000 -c-1 --cors\"",
+    "start": "npx http-server . -p 3000 -c-1 --cors",
+    "api": "cd ../backend && python src/api-bridge.py"
+  },
+  "keywords": [
+    "ai",
+    "documentation",
+    "code-analysis",
+    "github",
+    "frontend"
+  ],
+  "author": "Tekshila Team",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "concurrently": "^8.2.0"
+  },
+  "dependencies": {}
+}
